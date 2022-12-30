@@ -5,31 +5,59 @@
 #include <Adafruit_SSD1306.h>
 #include "I2C.h"
 #include <MPU9250_asukiaaa.h>
+#include <SoftwareSerial.h>
 
 MPU9250_asukiaaa mpu9250;
 float aX, aY, aZ, aSqrt, gX, gY, gZ, mDirection, mX, mY, mZ;
 
 // constants
+
+const int DISPLAY_ADDRESS = 0x3C;
+const int digitalLed = 13;
+const int second = 1000;
+const int LINE_HEIGHT = 8;
+
 int OLED_RESET = -1;
-int DISPLAY_ADDRESS = 0x3C;
-int digitalLed = 13;
-uint8_t onBoardDigitalOn = 0;
-int second = 1000;
-int LINE_HEIGHT = 8;
+int onBoardDigitalOn = 0;
+uint8_t sensorId;
 
 Adafruit_SSD1306 display = Adafruit_SSD1306(128, 64, &WIRE);
-bool mpuOn = false;
-bool displayOn = true;
+
+// Create a software serial port called "gpsSerial"
+SoftwareSerial *gpsSerial;
 
 void setup()
 {
   // put your setup code here, to run once:
   Serial.begin(9600);
   while (!Serial)
-    ;
+  {
+    delay(1);
+  };
+
+  pinMode(gpsRXPin, INPUT);
+  pinMode(gpsTXPin, OUTPUT);
+  gpsSerial = new SoftwareSerial(gpsRXPin, gpsTXPin);
+  gpsSerial->begin(gpsBaud);
 
   log({"Starting ..."});
   initDisplay();
+
+  int result = 1;
+  display.clearDisplay();
+
+  result = mpu9250.readId(&sensorId);
+  if (result == 0)
+  {
+    displaySensorId(sensorId);
+  }
+  else
+  {
+    Serial.println("Cannot read sensorId " + String(result));
+  }
+
+  // Start the software serial port at the GPS's default baud
+  // gpsSerial.begin(gpsBaud);
 
   setOnBoardLED(onBoardDigitalOn);
   // MPU 9550
@@ -47,22 +75,8 @@ void setup()
 
 void loop()
 {
-
-  uint8_t sensorId;
-  int result = 1;
   display.clearDisplay();
-
-  result = mpu9250.readId(&sensorId);
-  if (result == 0)
-  {
-    displaySensorId(sensorId);
-  }
-  else
-  {
-    Serial.println("Cannot read sensorId " + String(result));
-  }
-
-  result = mpu9250.accelUpdate();
+  int result = mpu9250.accelUpdate();
   if (result == 0)
   {
     // displayLevel(mpu9250.accelZ());
@@ -75,7 +89,7 @@ void loop()
 
     // should be 1 when flat
     aZ = mpu9250.accelZ();
-   //  aSqrt = mpu9250.accelSqrt();
+    //  aSqrt = mpu9250.accelSqrt();
 
     displayAccel(aX, aY, aZ);
   }
@@ -101,7 +115,8 @@ void loop()
   result = mpu9250.magUpdate();
   if (result == 0)
   {
-    displayDirection(mpu9250.magX());
+    // displayDirection(mpu9250.magX());
+    displayDirection(mpu9250.magHorizDirection());
 
     // mX = mpu9250.magX();
     // mY = mpu9250.magY();
@@ -115,7 +130,7 @@ void loop()
   }
 
   display.display();
-  delay(1000);
+  delay(250);
 }
 
 void setOnBoardLED(bool isOn)

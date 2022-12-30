@@ -50,6 +50,24 @@
 #define YELLOW 0xFFE0
 #define WHITE 0xFFFF
 
+const int PIN_D_2 = 5;
+const int PIN_D_3 = 6;
+const int PIN_D_4 = 7;
+const int PIN_D_5 = 8;
+const int PIN_D_6 = 9;
+const int PIN_D_7 = 10;
+const int PIN_D_8 = 11;
+const int PIN_D_9 = 12;
+const int PIN_D_10 = 13;
+const int PIN_D_11 = 14;
+const int PIN_D_12 = 15;
+
+// gps
+const int gpsRXPin = PIN_D_7;
+const int gpsTXPin = PIN_D_5;
+// Default baud of NEO-6M is 9600
+const long gpsBaud = 9600;
+
 void setOnBoardLED(bool isOn);
 void log(char string[50]);
 void writeToI2C(int address, char string[50]);
